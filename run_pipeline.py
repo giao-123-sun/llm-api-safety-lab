@@ -84,6 +84,9 @@ def _generate_images(client: OpenRouterClient) -> list[Path]:
     errors: list[str] = []
     img_dir = Path("assets/generated")
     img_dir.mkdir(parents=True, exist_ok=True)
+    err_log = img_dir / "image_errors.log"
+    if err_log.exists():
+        err_log.unlink()
 
     threat_prompt = (
         "Create a clean security architecture illustration for LLM API safety. "
@@ -130,7 +133,7 @@ def _generate_images(client: OpenRouterClient) -> list[Path]:
         if not success:
             errors.append("All image models failed for risk matrix prompt.")
     if errors:
-        Path("assets/generated/image_errors.log").write_text("\n".join(errors), encoding="utf-8")
+        err_log.write_text("\n".join(errors), encoding="utf-8")
     return generated
 
 
