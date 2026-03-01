@@ -7,7 +7,10 @@ import pandas as pd
 
 def main() -> None:
     summary = pd.read_csv("results/summary.csv")
-    report_md = Path("results/report.md").read_text(encoding="utf-8")
+    report_path = Path("results/paper_v2.md") if Path("results/paper_v2.md").exists() else Path("results/report.md")
+    report_md = report_path.read_text(encoding="utf-8")
+    related_work_path = Path("research/related_work_comparison.md")
+    related_work_md = related_work_path.read_text(encoding="utf-8") if related_work_path.exists() else "N/A"
     manifest_path = Path("assets/generated/manifest.json")
     images: list[str] = []
     if manifest_path.exists():
@@ -106,7 +109,8 @@ def main() -> None:
     <div class="cards">
       <div class="card"><b>Raw Data</b><br />results/raw_results.csv</div>
       <div class="card"><b>Summary</b><br />results/summary.csv</div>
-      <div class="card"><b>Report</b><br />results/report.md</div>
+      <div class="card"><b>Report</b><br />{report_path.as_posix()}</div>
+      <div class="card"><b>Related Work</b><br />research/related_work_comparison.md</div>
       <div class="card"><b>Research Log</b><br />research/research_log.md</div>
     </div>
     <h2>Ablation Summary</h2>
@@ -132,6 +136,8 @@ def main() -> None:
     {image_html}
     <h2>Report Snapshot</h2>
     <pre>{report_md.replace("<", "&lt;").replace(">", "&gt;")}</pre>
+    <h2>Related Work Snapshot</h2>
+    <pre>{related_work_md.replace("<", "&lt;").replace(">", "&gt;")}</pre>
   </div>
 </body>
 </html>
@@ -143,4 +149,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

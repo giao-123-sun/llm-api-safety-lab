@@ -76,7 +76,8 @@
     <div class="cards">
       <div class="card"><b>Raw Data</b><br />results/raw_results.csv</div>
       <div class="card"><b>Summary</b><br />results/summary.csv</div>
-      <div class="card"><b>Report</b><br />results/report.md</div>
+      <div class="card"><b>Report</b><br />results/paper_v2.md</div>
+      <div class="card"><b>Related Work</b><br />research/related_work_comparison.md</div>
       <div class="card"><b>Research Log</b><br />research/research_log.md</div>
     </div>
     <h2>Ablation Summary</h2>
@@ -106,121 +107,136 @@
     <img src="../assets/generated/threat_architecture.png" alt="threat_architecture" style="max-width:100%;margin:16px 0;" />
 <img src="../assets/generated/risk_matrix.png" alt="risk_matrix" style="max-width:100%;margin:16px 0;" />
     <h2>Report Snapshot</h2>
-    <pre># LLM API Safety Closed-Loop Study
+    <pre># LLM API Safety in BYO-Key Deployments: Threats, Ablations, and Positioning
 
-- Generated at (UTC): 2026-03-01T15:28:25.661017+00:00
-- Attack samples evaluated: 100
-- Benign samples evaluated: 100
+## 摘要
+本文研究一个高频产品模式: 平台让用户自行填写 `api_key`、`baseurl`、`model` 来接入第三方模型 API。该模式降低平台成本, 但显著扩大了信任边界, 特别是在 Agent 已具备沙盒、工具调用与 MCP 连接能力时。我们构建闭环流程（调研→假设→实验→调整→消融→发布）, 在 20 个场景上评估 5 种防御配置, 共 200 条决策样本。结果显示: 各配置在攻击样本上均可达到 100% 的拦截/升级动作; 但规则预过滤配置带来 10% 良性误拦截, 使综合分数从 100 降到 97。文末对比 9 篇代表性论文, 说明当前工作与 SOTA 的差异和下一步补强方向。
 
-## Core Findings
-1. Best profile is **baseline** with security_score=100.00, attack_block_rate=100.00%.
-2. Baseline weakest profile is **policy_filter_least_priv** with security_score=97.00.
-3. Full-stack defenses improve security while preserving acceptable benign pass-through.
+## 1. 问题定义
+### 1.1 研究问题
+1. 用户可控 `baseurl/model` 是否会增加 API 外传与越权风险?
+2. 防御配置（策略判定、预过滤、最小权限、HITL）的边际收益如何?
+3. 在安全与可用性之间, 哪类配置更适合工程落地?
 
-## Ablation Table
+### 1.2 威胁边界
+1. 入站输入污染: Prompt injection（直接/间接）。
+2. 路由污染: SSRF-like 目标与恶意 baseurl。
+3. 能力污染: 工具调用、MCP 连接器、自动循环执行。
+4. 目标污染: 诱导系统输出敏感策略、密钥、内部机制。
 
-| profile | attack_block_rate_pct | benign_allow_rate_pct | unsafe_error_rate_pct | avg_risk_score | security_score | delta_from_prev |
-| --- | --- | --- | --- | --- | --- | --- |
-| baseline | 100.0 | 100.0 | 0.0 | 49.75 | 100.0 | 0.0 |
-| policy_only | 100.0 | 100.0 | 0.0 | 50.2 | 100.0 | 0.0 |
-| policy_filter | 100.0 | 90.0 | 5.0 | 51.52 | 97.0 | -3.0 |
-| policy_filter_least_priv | 100.0 | 90.0 | 5.0 | 51.27 | 97.0 | 0.0 |
-| full_stack | 100.0 | 90.0 | 5.0 | 51.27 | 97.0 | 0.0 |
+## 2. 方法
+### 2.1 场景集
+1. 攻击 10 类: prompt injection、secret exfiltration、privilege escalation、SSRF-like、tool abuse、MCP abuse、model swap、reverse engineering、autonomous loop 等。
+2. 良性 10 类: 总结、编码、调试、翻译、计划、文档等常见任务。
+3. 每场景重复 2 次, 总样本 200。
 
-## Persona-Guided Planning (Sub-Agent Memos)
+### 2.2 消融配置
+1. `baseline`
+2. `policy_only`
+3. `policy_filter`
+4. `policy_filter_least_priv`
+5. `full_stack`
 
-### Bruce Schneier
-This is a classic **confused deputy** problem exacerbated by **indirection**. When a website asks for your `api_key` and `baseurl`, it isn't just a client; it’s a middleman. You are extending your trust boundary to include their infrastructure, their logging, and their developers’ competence.
+### 2.3 指标
+1. `attack_block_rate`
+2. `benign_allow_rate`
+3. `unsafe_error_rate`
+4. `security_score = 0.7 * attack_block_rate + 0.3 * benign_allow_rate`
 
-### 1) Top Risks
+## 3. 实验结果
+| Profile | Attack Block | Benign Allow | Unsafe Error | Avg Risk | Security Score |
+| --- | --- | --- | --- | --- | --- |
+| baseline | 100% (20/20) | 100% (20/20) | 0% (0/40) | 49.75 | 100 |
+| policy_only | 100% (20/20) | 100% (20/20) | 0% (0/40) | 50.20 | 100 |
+| policy_filter | 100% (20/20) | 90% (18/20) | 5% (2/40) | 51.52 | 97 |
+| policy_filter_least_priv | 100% (20/20) | 90% (18/20) | 5% (2/40) | 51.28 | 97 |
+| full_stack | 100% (20/20) | 90% (18/20) | 5% (2/40) | 51.28 | 97 |
 
-*   **Credential Exfiltration via `baseurl` Hijacking:** An attacker-controlled site or a compromised frontend can point the `baseurl` to a malicious listener. If the site doesn't strictly validate the URL, your API key is leaked in the `Authorization` header of the first outbound request.
-*   **The "Skill" Escalation Path:** Agentic capabilities (MCP, sandboxes) transform a data leak into a system compromise. If an agent has a "read_file" skill and is tricked by Prompt Injection (Indirect or Direct), it can exfiltrate your local environment variables or SSH keys to the provided `baseurl`.
-*   **Prompt Injection as Remote Code Execution (RCE):** In a sandboxed environment, the sandbox is the security boundary. However, if the agent can define its own tools or modify its `baseurl` dynamically via a malicious prompt, the sandbox becomes a staging area for lateral movement within your network.
-*   **Trust Cascade Failure:** You trust the website, the website trusts the LLM provider, and the LLM provider trusts the training data. A single adversarial prompt in a retrieved document (RAG) can instruct the agent to use its "skills" to dump the `api_key` to an external log.
+结论:
+1. 本轮样本中, 攻击拦截差异不明显, 主要差异来自良性误拦截。
+2. 规则预过滤在本数据集上过保守, 可用性下降。
+3. 最小权限和 HITL 在“策略判定级”实验中增益有限, 但在真实执行链路中仍是必要护栏。
 
-### 2) Experiment Design Advice
+## 4. 与相关论文的对比（做到什么程度、区别在哪里）
+详版见: `research/related_work_comparison.md`。
 
-*   **Test for "Key Bleed":** Design a test where the `baseurl` points to a RequestBin. Observe if the site sends the `api_key` before verifying the endpoint's identity or if it sends it to subdomains it shouldn't.
-*   **Indirect Prompt Injection (IPI) via MCP:** Place a malicious instruction in a file that the agent is likely to read using its "skills." See if the agent can be coerced into
+摘要对比:
+1. 早期工作（Greshake 2023, Liu 2023）主要完成“攻击可行性与基准定义”。
+2. 中期工作（ToolEmu, AgentDojo, AGENTVIGIL）把评测推进到“工具/任务级动态交互”。
+3. 新近工作（CaMeL, PromptArmor）尝试“结构化防御体系”并量化 tradeoff。
+4. 我们当前工作的定位是“产品部署侧”：聚焦 BYO key/baseurl/model 的 API 网关策略与可审计落地，而非最强 runtime benchmark。
 
-### Ron Kohavi
-### 1) Top Risks
-*   **SSRF via `baseurl` Manipulation:** Attackers provide internal/loopback addresses (e.g., `127.0.0.1`, `169.254.169.254`) to scan internal infrastructure or exfiltrate cloud metadata.
-*   **Prompt Injection via Tool-Use:** Malicious data retrieved by an agent (e.g., via MCP or web search) can contain instructions that hijack the session, exfiltrating the user’s `api_key` to an attacker-controlled endpoint.
-*   **Sandbox Escape/Resource Exhaustion:** Non-deterministic agent code execution (skills) can lead to side-channel leaks or DoS if cgroups/namespaces are not strictly enforced.
-*   **Credential Scoping Failures:** Users providing high-privilege keys for low-privilege tasks, leading to unintended billing spikes or data deletion if the agent "hallucinates" a destructive command.
+## 5. 本工作与 SOTA 的差距
+1. 缺少真实执行层遥测（目前以决策级评估为主）。
+2. 攻击语料规模较小，且自适应攻击不足。
+3. 尚未跨模型/跨提供商做大样本统计显著性对比。
 
-### 2) Experiment Design Advice
-*   **The OEC (Overall Evaluation Criterion):** Define a composite metric: `Security Violations per 1k Sessions`. A violation is any unauthorized egress, unauthorized file access, or non-200 response from a validation proxy.
-*   **Factorial Design:** Use a $2 \times 2 \times 2$ design to isolate effects:
-    1.  **Input Source:** User-provided vs. System-provided (Keys/URLs).
-    2.  **Capability:** Basic Chat vs. Agentic (MCP/Skills).
-    3.  **Environment:** Open Internet vs. Restricted Sandbox.
-*   **A/A Testing:** Run a null experiment first. Ensure your monitoring stack (e.g., eBPF probes in the sandbox) doesn't introduce latency jitter that triggers false positives in "timeout" security triggers.
-*   **Statistical Power:** Security events are rare (low base rate). You need high volume or "Red Teaming" automation to simulate attacks, turning rare events into measurable frequencies.
+## 6. 下一步改进（按优先级）
+1. 接入 AgentDojo / AGENTVIGIL 风格运行时任务, 记录真实工具执行轨迹。
+2. 引入 PromptArmor / CaMeL 思路：把防御从“规则+策略”升级为“能力隔离+多阶段检测”。
+3. 扩展到多模型、多地区、多 provider 重复实验, 输出置信区间和显著性检验。
 
-### 3) What to
+## 7. 复现资产
+1. Raw data: `results/raw_results.csv`
+2. Summary: `results/summary.csv`
+3. Figures: `results/security_score.png`, `results/tradeoff.png`, `results/ablation_delta.png`
+4. Generated images: `assets/generated/threat_architecture.png`, `assets/generated/risk_matrix.png`
+5. Local related papers: `papers/*.pdf`
 
-### Edward Tufte
-### 1) Top Risks
+## 8. 关键参考（Primary Sources）
+1. https://arxiv.org/abs/2302.12173
+2. https://arxiv.org/abs/2310.12815
+3. https://arxiv.org/abs/2309.15817
+4. https://openreview.net/forum?id=m1YYAQjO3w
+5. https://arxiv.org/abs/2503.18813
+6. https://arxiv.org/abs/2506.01055
+7. https://arxiv.org/abs/2507.05630
+8. https://arxiv.org/abs/2507.15219
+9. https://aclanthology.org/2025.findings-emnlp.1258/
 
-*   **Credential Exfiltration via Prompt Injection:** Indirect injections can instruct the model to transmit the user’s `api_key` to an attacker-controlled `baseurl` via side-channel requests (e.g., image markdown or tool calls).
-*   **SSRF via BaseURL Manipulation:** Attackers can use the `baseurl` field to probe internal network infrastructure (e.g., `http://169.254.169.254`) if the application lacks strict egress filtering.
-*   **Sandbox Escapes via MCP:** Model Context Protocol (MCP) servers often grant filesystem or shell access. If the sandbox is porous, a compromised model can execute persistent malware or exfiltrate local environment variables.
-*   **Privilege Escalation:** "Skills" or tools mapped to the user’s identity may allow the model to perform irreversible actions (e.g., deleting cloud resources) without a human-in-the-loop confirmation.
+</pre>
+    <h2>Related Work Snapshot</h2>
+    <pre># Related Work Comparison for LLM API / Agent Safety
 
-### 2) Experiment Design Advice
+## Scope
+This note compares representative papers around prompt injection, agent tool-use risk, and defenses, then positions our current work.
 
-*   **Small Multiples:** Use a grid of sparklines to compare "Attack Success Rate" across different model families (GPT, Claude, Llama) vs. security configurations. This allows for rapid visual scanning of vulnerability patterns.
-*   **The Control Group:** Establish a baseline of "Default Security" (no user-provided URL, no sandbox access) to measure the delta in risk introduced by each new capability.
-*   **Trellis Plots:** Map "Agent Capability Level" (X-axis) against "Data Leakage Volume" (Y-axis), faceted by "Sandbox Type" (Docker, gVisor, WASM).
-*   **Quantify the Ratio:** Measure the *Data-Ink Ratio* of your security logs. Focus on the transition from "Benign Intent" to "Malicious Execution" timestamps.
+## Paper-by-Paper Comparison
+| Paper | What they did | Evaluation scale / setting | How far they got | Difference vs our work |
+| --- | --- | --- | --- | --- |
+| Greshake et al., 2023, *Not What You've Signed Up For* ([arXiv:2302.12173](https://arxiv.org/abs/2302.12173)) | First systematic framing of **indirect prompt injection** against LLM-integrated apps and plugins. | Real-world case-style attacks on then-deployed LLM app patterns. | Established that indirect instructions in untrusted content can steer model behavior across tool boundaries. | Their focus is attack discovery; ours is a deployable policy-gateway experiment for BYO `api_key/baseurl/model` deployments. |
+| Liu et al., 2023, *Formalizing and Benchmarking Prompt Injection Attacks and Defenses* ([arXiv:2310.12815](https://arxiv.org/abs/2310.12815)) | Formalized PI threats and built a benchmark with attacks and defenses. | 10 LLMs, 5 attack methods, 10 defenses, across 7 tasks and 5 real-world scenarios. | Provided broad cross-model evidence that no single defense dominates all settings. | Their breadth is larger; ours is narrower but targets practical API-gateway policy design and ablation under agent tooling assumptions. |
+| Ruan et al., 2023, *ToolEmu* ([arXiv:2309.15817](https://arxiv.org/abs/2309.15817)) | Built a simulator to evaluate risky tool-use behavior of LLM agents without real-world harm. | 36 tools, 144 cases, evaluated 5 advanced agents. | Showed substantial emergent risks in tool-use and safety policy gaps. | ToolEmu emphasizes simulated execution risk; ours emphasizes inbound-request policy decisions for hosted/API products. |
+| Debenedetti et al., 2024, *AgentDojo* ([OpenReview](https://openreview.net/forum?id=m1YYAQjO3w)) | Created a dynamic benchmark for PI resilience of LLM agents. | Interactive tasks with tool-enabled agents (function-calling and ReAct). | Reported high attack success rates: up to 97.16% (function-calling), 83.39% (ReAct). | AgentDojo is a stronger runtime benchmark; our current pipeline is lighter-weight and easier to operationalize but less execution-realistic. |
+| Debenedetti et al., 2025, *CaMeL* ([arXiv:2503.18813](https://arxiv.org/abs/2503.18813)) | Proposed capability-based confinement for LLM agents. | New benchmark + capability-oriented defense architecture. | Found baseline defenses still leave large unresolved risk/utility tradeoff; CaMeL improves but does not eliminate risk. | We currently approximate least-privilege at policy level; CaMeL goes deeper on capability confinement semantics. |
+| Alizadeh et al., 2025, *Simple Prompt Injection Attacks can Leak Personal Data from AI Agents* ([arXiv:2506.01055](https://arxiv.org/abs/2506.01055)) | Measured privacy leakage from realistic PI attacks. | AgentDojo-style setups with simple and adaptive attacks. | Reported 15-50 pp drops in privacy preservation; ASR around 20% (simple) and 15% (adaptive). | Their emphasis is privacy leakage quantification; ours tracks broader API-gateway safety decisions (exfiltration, SSRF-like, tool abuse, etc.). |
+| Choudhary et al., 2025, *How Not to Detect Prompt Injections* ([arXiv:2507.05630](https://arxiv.org/abs/2507.05630)) | Studied detector failure under attack and proposed DataFlip-style evasion. | Tested against KAD and PI detector pipelines. | Claimed &gt;91% attack success with effectively 0% detection in some conditions. | This directly stresses our rule-heavy profile: naive filtering can be bypassed or overblock benign traffic. |
+| Shi et al., 2025, *PromptArmor* ([arXiv:2507.15219](https://arxiv.org/abs/2507.15219)) | Layered defense pipeline for prompt-injection. | Controlled benchmarks across multiple prompt types. | Reported ASR &lt;1% and FPR/FNR &lt;1% in their setting. | Their defense stack is stronger than our current deterministic prefilter; we can adapt PromptArmor-style staged checks in next revision. |
+| Wang et al., 2025, *AGENTVIGIL* ([ACL Anthology](https://aclanthology.org/2025.findings-emnlp.1258/)) | Benchmarked malicious prompt injections and mitigation for autonomous agents. | 71 malicious patterns + 70 tasks, with 3-stage mitigation pipeline. | Demonstrated meaningful security gain with only minor utility tradeoff. | Closest to our applied goal; our contribution is BYO API configuration threat boundary and web/API gateway deployment workflow. |
 
-### 3) What to Avoid
+## Current Maturity Map (What level each line of work reaches)
+1. `Attack discovery phase`: 2023 PI papers established exploitability and attack taxonomy.
+2. `Benchmark phase`: ToolEmu / AgentDojo / AGENTVIGIL quantify risk at scale.
+3. `Defense architecture phase`: CaMeL / PromptArmor propose structured mitigations.
+4. `Operational deployment phase` (our current focus): API gateway policy + auditable controls for products where users bring their own key/baseurl/model.
 
-*   **Venn Diagrams:** They lack quantitative precision. Use UpSet plots if showing overlapping vulnerabilities.
-*   **Gauges and Donut Charts:** These obscure the magnitude of risk. Use linear scales
+## Main gaps still open
+1. Runtime-grounded, end-to-end compromise metrics for real tool execution and MCP connectors.
+2. Standardized utility-security tradeoff reporting under adaptive attackers.
+3. Cross-provider reproducibility when model/provider behavior changes rapidly.
 
-### George Orwell
-### 1. Top Risks
+## Local paper files downloaded
+1. `papers/2023_Greshake_IndirectPromptInjection.pdf`
+2. `papers/2023_Liu_FormalizingBenchmarkingPI.pdf`
+3. `papers/2023_Ruan_ToolEmu.pdf`
+4. `papers/2024_Debenedetti_AgentDojo.pdf`
+5. `papers/2025_Debenedetti_CaMeL.pdf`
+6. `papers/2025_Alizadeh_DataLeakageAgentDojo.pdf`
+7. `papers/2025_Choudhary_DataFlipKAD.pdf`
+8. `papers/2025_Shi_PromptArmor.pdf`
+9. `papers/2025_Wang_AGENTVIGIL.pdf`
 
-*   **SSRF via Base URL Manipulation:** If the backend does not validate the `baseurl` against an allowlist, an attacker can point the agent to internal metadata services (e.g., `169.254.169.254`) or private network resources.
-*   **Prompt Injection leading to Tool Abuse:** Maliciously crafted system prompts or retrieved context can force the agent to execute MCP (Model Context Protocol) tools or sandbox commands that exfiltrate the user’s `api_key` to an external logging endpoint.
-*   **State Persistence Poisoning:** If the agent has "skills" that modify a persistent database or filesystem, a single compromised session can inject long-term backdoors into the agent's logic, affecting subsequent users or sessions.
-*   **Sandbox Escape via Resource Exhaustion:** Inadequately restricted sandboxes are vulnerable to fork bombs or memory exhaustion, potentially leading to Denial of Service (DoS) for the host orchestrator.
-
-### 2. Experiment Design Advice
-
-*   **Isolate the Variable:** Test "BYO-Key" (Bring Your Own Key) configurations separately from "Managed Key" configurations. Determine if the risk profile shifts from the provider to the user.
-*   **Quantify Success:** Do not use qualitative terms like "more secure." Define a **Security Failure Event (SFE)**: e.g., "The agent successfully transmitted a dummy secret from the environment to a non-authorized URL."
-*   **Adversarial Simulation:** Use a "Red Team" script to provide a `baseurl` pointing to a local listener. Measure how many requests bypass the application's egress filters.
-*   **Resource Monitoring:** During sandbox execution, log CPU/RAM spikes. Define a "Safe Threshold" and measure the frequency of breaches.
-
-### 3. What to Avoid
-
-*   **Vague Adjectives:** Eliminate words like *robust*, *enhanced*, or *intelligent*. If a sandbox is "secure," state exactly which syscalls it blocks.
-*   **Implicit Trust:** Never assume the `baseurl
-
-## Data Sources
-- [OpenRouter Quickstart](https://openrouter.ai/docs/quickstart)
-- [OpenRouter Model: google/gemini-3.1-flash-image-preview](https://openrouter.ai/google/gemini-3.1-flash-image-preview)
-- [OpenRouter Authentication](https://openrouter.ai/docs/api-reference/authentication)
-- [Model Context Protocol Specification](https://modelcontextprotocol.io/specification/2025-06-18)
-- [OpenAI Prompt Injection Defenses](https://openai.github.io/openai-agents-js/guides/security/)
-- [OWASP Top 10 for LLM Applications 2025](https://genai.owasp.org/llm-top-10/)
-- [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework)
-- [MCP Safety Audit (ArXiv)](https://arxiv.org/abs/2506.13653)
-
-## Limitations
-- This benchmark measures policy decisions, not full exploit execution in a live runtime.
-- Some protections are rule-based and should be replaced by production-grade classifiers.
-- External validity depends on model updates and deployment context.
-
-## Next Steps
-1. Add live sandbox execution telemetry to measure tool-call level compromise rate.
-2. Expand multilingual attack corpus and include adaptive attacker loops.
-3. Run cross-model comparison and confidence intervals across larger seeds.</pre>
+</pre>
   </div>
 </body>
 </html>
