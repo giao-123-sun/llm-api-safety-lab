@@ -1,0 +1,13 @@
+{
+  "created_at_utc": "2026-03-01T14:31:36.267553+00:00",
+  "model": "meta-llama/llama-3.3-70b-instruct",
+  "temperature": 0.5,
+  "runs_per_scenario": 2,
+  "profiles": [
+    "baseline",
+    "policy_only",
+    "policy_filter",
+    "policy_filter_least_priv",
+    "full_stack"
+  ]
+}

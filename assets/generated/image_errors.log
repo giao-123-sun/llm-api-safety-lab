@@ -1,0 +1,10 @@
+google/gemini-3.1-flash-image-preview: HTTPError
+google/gemini-3-pro-image-preview: HTTPError
+google/gemini-2.5-flash-image: HTTPError
+openai/gpt-5-image-mini: HTTPError
+All image models failed for threat architecture prompt.
+google/gemini-3.1-flash-image-preview: HTTPError
+google/gemini-3-pro-image-preview: HTTPError
+google/gemini-2.5-flash-image: HTTPError
+openai/gpt-5-image-mini: HTTPError
+All image models failed for risk matrix prompt.

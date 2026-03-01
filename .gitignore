@@ -9,12 +9,3 @@ env/
 
 # Local secrets
 config/*.txt
-
-# Generated artifacts
-results/*.json
-results/*.csv
-results/*.png
-results/*.md
-assets/generated/
-docs/site_data.json
-
