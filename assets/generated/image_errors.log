@@ -1,10 +1,4 @@
-google/gemini-3.1-flash-image-preview: HTTPError
-google/gemini-3-pro-image-preview: HTTPError
-google/gemini-2.5-flash-image: HTTPError
-openai/gpt-5-image-mini: HTTPError
-All image models failed for threat architecture prompt.
-google/gemini-3.1-flash-image-preview: HTTPError
-google/gemini-3-pro-image-preview: HTTPError
-google/gemini-2.5-flash-image: HTTPError
-openai/gpt-5-image-mini: HTTPError
-All image models failed for risk matrix prompt.
+google/gemini-3.1-flash-image-preview => 403 | {"error":{"message":"This model is not available in your region.","code":403}}
+google/gemini-3-pro-image-preview => 403 | {"error":{"message":"This model is not available in your region.","code":403}}
+google/gemini-2.5-flash-image => 403 | {"error":{"message":"This model is not available in your region.","code":403}}
+openai/gpt-5-image-mini => 403 | {"error":{"message":"This model is not available in your region.","code":403}}
