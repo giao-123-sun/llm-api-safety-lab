@@ -2,7 +2,19 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
+import shutil
+import html
 import pandas as pd
+
+
+def _copy_to_static(src: Path, static_dir: Path, name: str | None = None) -> str:
+    if not src.exists():
+        return ""
+    static_dir.mkdir(parents=True, exist_ok=True)
+    target_name = name or src.name
+    dst = static_dir / target_name
+    shutil.copy2(src, dst)
+    return f"static/{target_name}"
 
 
 def main() -> None:
@@ -11,6 +23,23 @@ def main() -> None:
     report_md = report_path.read_text(encoding="utf-8")
     related_work_path = Path("research/related_work_comparison.md")
     related_work_md = related_work_path.read_text(encoding="utf-8") if related_work_path.exists() else "N/A"
+    docs_dir = Path("docs")
+    static_dir = docs_dir / "static"
+    docs_dir.mkdir(parents=True, exist_ok=True)
+
+    logo_web = _copy_to_static(Path("assets/brand/project-logo.svg"), static_dir)
+    summary_web = _copy_to_static(Path("results/summary.csv"), static_dir)
+    raw_web = _copy_to_static(Path("results/raw_results.csv"), static_dir)
+    report_web = _copy_to_static(report_path, static_dir, "paper.md")
+    related_web = _copy_to_static(related_work_path, static_dir)
+    research_log_web = _copy_to_static(Path("research/research_log.md"), static_dir)
+
+    chart_paths = {
+        "security_score": _copy_to_static(Path("results/security_score.png"), static_dir),
+        "tradeoff": _copy_to_static(Path("results/tradeoff.png"), static_dir),
+        "ablation_delta": _copy_to_static(Path("results/ablation_delta.png"), static_dir),
+    }
+
     manifest_path = Path("assets/generated/manifest.json")
     images: list[str] = []
     if manifest_path.exists():
@@ -29,9 +58,20 @@ def main() -> None:
             "</tr>"
         )
     table_html = "\n".join(rows)
-    image_html = "\n".join([f'<img src="../{p}" alt="{Path(p).stem}" style="max-width:100%;margin:16px 0;" />' for p in images])
+    generated_image_tags: list[str] = []
+    for p in images:
+        src = Path(p)
+        web = _copy_to_static(src, static_dir)
+        if web:
+            generated_image_tags.append(
+                f'<img src="{web}" alt="{src.stem}" style="max-width:100%;margin:16px 0;" />'
+            )
+    image_html = "\n".join(generated_image_tags)
 
-    html = f"""<!doctype html>
+    report_md_escaped = html.escape(report_md)
+    related_work_md_escaped = html.escape(related_work_md)
+
+    page_html = f"""<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -100,18 +140,42 @@ def main() -> None:
       padding: 10px 12px;
       background: #fff;
     }}
+    .hero {{
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+    }}
+    .logo {{
+      width: 58px;
+      height: 58px;
+      border: none;
+      border-radius: 12px;
+      background: transparent;
+    }}
+    a.file {{
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px dashed var(--accent);
+    }}
+    a.file:hover {{
+      color: #153f67;
+    }}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>LLM API Safety Lab</h1>
+    <div class="hero">
+      <img class="logo" src="{logo_web}" alt="LLM API Safety Lab logo" />
+      <h1>LLM API Safety Lab</h1>
+    </div>
     <p>Closed-loop research pipeline: survey -> hypothesis -> experiment -> adjustment -> ablation -> reporting.</p>
     <div class="cards">
-      <div class="card"><b>Raw Data</b><br />results/raw_results.csv</div>
-      <div class="card"><b>Summary</b><br />results/summary.csv</div>
-      <div class="card"><b>Report</b><br />{report_path.as_posix()}</div>
-      <div class="card"><b>Related Work</b><br />research/related_work_comparison.md</div>
-      <div class="card"><b>Research Log</b><br />research/research_log.md</div>
+      <div class="card"><b>Raw Data</b><br /><a class="file" href="{raw_web}">Download CSV</a></div>
+      <div class="card"><b>Summary</b><br /><a class="file" href="{summary_web}">Download CSV</a></div>
+      <div class="card"><b>Report</b><br /><a class="file" href="{report_web}">Open Markdown</a></div>
+      <div class="card"><b>Related Work</b><br /><a class="file" href="{related_web}">Open Markdown</a></div>
+      <div class="card"><b>Research Log</b><br /><a class="file" href="{research_log_web}">Open Markdown</a></div>
     </div>
     <h2>Ablation Summary</h2>
     <table>
@@ -129,21 +193,21 @@ def main() -> None:
       </tbody>
     </table>
     <h2>Charts</h2>
-    <img src="../results/security_score.png" alt="security_score" style="max-width:100%;margin:16px 0;" />
-    <img src="../results/tradeoff.png" alt="tradeoff" style="max-width:100%;margin:16px 0;" />
-    <img src="../results/ablation_delta.png" alt="ablation_delta" style="max-width:100%;margin:16px 0;" />
+    <img src="{chart_paths['security_score']}" alt="security_score" style="max-width:100%;margin:16px 0;" />
+    <img src="{chart_paths['tradeoff']}" alt="tradeoff" style="max-width:100%;margin:16px 0;" />
+    <img src="{chart_paths['ablation_delta']}" alt="ablation_delta" style="max-width:100%;margin:16px 0;" />
     <h2>Gemini Image Outputs</h2>
     {image_html}
     <h2>Report Snapshot</h2>
-    <pre>{report_md.replace("<", "&lt;").replace(">", "&gt;")}</pre>
+    <pre>{report_md_escaped}</pre>
     <h2>Related Work Snapshot</h2>
-    <pre>{related_work_md.replace("<", "&lt;").replace(">", "&gt;")}</pre>
+    <pre>{related_work_md_escaped}</pre>
   </div>
 </body>
 </html>
 """
-    out = Path("docs/index.html")
-    out.write_text(html, encoding="utf-8")
+    out = docs_dir / "index.html"
+    out.write_text(page_html, encoding="utf-8")
     print(f"Rendered {out}")
 
 

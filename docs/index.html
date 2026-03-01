@@ -67,18 +67,42 @@
       padding: 10px 12px;
       background: #fff;
     }
+    .hero {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+    .logo {
+      width: 58px;
+      height: 58px;
+      border: none;
+      border-radius: 12px;
+      background: transparent;
+    }
+    a.file {
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px dashed var(--accent);
+    }
+    a.file:hover {
+      color: #153f67;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>LLM API Safety Lab</h1>
+    <div class="hero">
+      <img class="logo" src="static/project-logo.svg" alt="LLM API Safety Lab logo" />
+      <h1>LLM API Safety Lab</h1>
+    </div>
     <p>Closed-loop research pipeline: survey -> hypothesis -> experiment -> adjustment -> ablation -> reporting.</p>
     <div class="cards">
-      <div class="card"><b>Raw Data</b><br />results/raw_results.csv</div>
-      <div class="card"><b>Summary</b><br />results/summary.csv</div>
-      <div class="card"><b>Report</b><br />results/paper_v2.md</div>
-      <div class="card"><b>Related Work</b><br />research/related_work_comparison.md</div>
-      <div class="card"><b>Research Log</b><br />research/research_log.md</div>
+      <div class="card"><b>Raw Data</b><br /><a class="file" href="static/raw_results.csv">Download CSV</a></div>
+      <div class="card"><b>Summary</b><br /><a class="file" href="static/summary.csv">Download CSV</a></div>
+      <div class="card"><b>Report</b><br /><a class="file" href="static/paper.md">Open Markdown</a></div>
+      <div class="card"><b>Related Work</b><br /><a class="file" href="static/related_work_comparison.md">Open Markdown</a></div>
+      <div class="card"><b>Research Log</b><br /><a class="file" href="static/research_log.md">Open Markdown</a></div>
     </div>
     <h2>Ablation Summary</h2>
     <table>
@@ -100,12 +124,12 @@
       </tbody>
     </table>
     <h2>Charts</h2>
-    <img src="../results/security_score.png" alt="security_score" style="max-width:100%;margin:16px 0;" />
-    <img src="../results/tradeoff.png" alt="tradeoff" style="max-width:100%;margin:16px 0;" />
-    <img src="../results/ablation_delta.png" alt="ablation_delta" style="max-width:100%;margin:16px 0;" />
+    <img src="static/security_score.png" alt="security_score" style="max-width:100%;margin:16px 0;" />
+    <img src="static/tradeoff.png" alt="tradeoff" style="max-width:100%;margin:16px 0;" />
+    <img src="static/ablation_delta.png" alt="ablation_delta" style="max-width:100%;margin:16px 0;" />
     <h2>Gemini Image Outputs</h2>
-    <img src="../assets/generated/threat_architecture.png" alt="threat_architecture" style="max-width:100%;margin:16px 0;" />
-<img src="../assets/generated/risk_matrix.png" alt="risk_matrix" style="max-width:100%;margin:16px 0;" />
+    <img src="static/threat_architecture.png" alt="threat_architecture" style="max-width:100%;margin:16px 0;" />
+<img src="static/risk_matrix.png" alt="risk_matrix" style="max-width:100%;margin:16px 0;" />
     <h2>Report Snapshot</h2>
     <pre># LLM API Safety in BYO-Key Deployments: Threats, Ablations, and Positioning
 
@@ -204,7 +228,7 @@ This note compares representative papers around prompt injection, agent tool-use
 ## Paper-by-Paper Comparison
 | Paper | What they did | Evaluation scale / setting | How far they got | Difference vs our work |
 | --- | --- | --- | --- | --- |
-| Greshake et al., 2023, *Not What You've Signed Up For* ([arXiv:2302.12173](https://arxiv.org/abs/2302.12173)) | First systematic framing of **indirect prompt injection** against LLM-integrated apps and plugins. | Real-world case-style attacks on then-deployed LLM app patterns. | Established that indirect instructions in untrusted content can steer model behavior across tool boundaries. | Their focus is attack discovery; ours is a deployable policy-gateway experiment for BYO `api_key/baseurl/model` deployments. |
+| Greshake et al., 2023, *Not What You&#x27;ve Signed Up For* ([arXiv:2302.12173](https://arxiv.org/abs/2302.12173)) | First systematic framing of **indirect prompt injection** against LLM-integrated apps and plugins. | Real-world case-style attacks on then-deployed LLM app patterns. | Established that indirect instructions in untrusted content can steer model behavior across tool boundaries. | Their focus is attack discovery; ours is a deployable policy-gateway experiment for BYO `api_key/baseurl/model` deployments. |
 | Liu et al., 2023, *Formalizing and Benchmarking Prompt Injection Attacks and Defenses* ([arXiv:2310.12815](https://arxiv.org/abs/2310.12815)) | Formalized PI threats and built a benchmark with attacks and defenses. | 10 LLMs, 5 attack methods, 10 defenses, across 7 tasks and 5 real-world scenarios. | Provided broad cross-model evidence that no single defense dominates all settings. | Their breadth is larger; ours is narrower but targets practical API-gateway policy design and ablation under agent tooling assumptions. |
 | Ruan et al., 2023, *ToolEmu* ([arXiv:2309.15817](https://arxiv.org/abs/2309.15817)) | Built a simulator to evaluate risky tool-use behavior of LLM agents without real-world harm. | 36 tools, 144 cases, evaluated 5 advanced agents. | Showed substantial emergent risks in tool-use and safety policy gaps. | ToolEmu emphasizes simulated execution risk; ours emphasizes inbound-request policy decisions for hosted/API products. |
 | Debenedetti et al., 2024, *AgentDojo* ([OpenReview](https://openreview.net/forum?id=m1YYAQjO3w)) | Created a dynamic benchmark for PI resilience of LLM agents. | Interactive tasks with tool-enabled agents (function-calling and ReAct). | Reported high attack success rates: up to 97.16% (function-calling), 83.39% (ReAct). | AgentDojo is a stronger runtime benchmark; our current pipeline is lighter-weight and easier to operationalize but less execution-realistic. |

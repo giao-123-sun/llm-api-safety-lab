@@ -1,14 +1,74 @@
 # LLM API Safety Lab
 
-Closed-loop research pipeline for your idea:
+<p align="center">
+  <img src="assets/brand/project-logo.svg" alt="LLM API Safety Lab logo" width="170" />
+</p>
 
-1. Security research and source logging  
-2. Hypothesis generation with expert-style sub-agent personas  
-3. Baseline and defense experiments  
-4. Ablation analysis  
-5. Data visualization  
-6. Image generation via `google/gemini-3.1-flash-image-preview` on OpenRouter  
-7. Open-source publication + GitHub Pages project URL
+<p align="center">
+  Closed-loop research pipeline for <b>LLM API safety</b> in BYO-key deployments.
+</p>
+
+<p align="center">
+  <a href="https://github.com/giao-123-sun/llm-api-safety-lab">Repository</a> |
+  <a href="https://giao-123-sun.github.io/llm-api-safety-lab/">Project Website</a>
+</p>
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [Outputs](#outputs)
+- [Project Structure](#project-structure)
+- [Research Assets](#research-assets)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [Security Notice](#security-notice)
+
+## Overview
+
+`LLM API Safety Lab` is an engineering-first research project that evaluates safety risks when users provide their own:
+
+- `api_key`
+- `baseurl`
+- `model`
+
+The pipeline runs end-to-end:
+
+1. research and source collection
+2. threat scenario construction
+3. baseline/defense experiments
+4. ablation analysis
+5. chart and report generation
+6. website publishing
+
+## Key Features
+
+- Multi-profile safety ablation (`baseline` to `full_stack`)
+- Structured policy-gateway decision simulation
+- Built-in prompt/tool/MCP abuse scenarios
+- Auto-generated charts and markdown reports
+- Related-work comparison with downloaded papers
+- GitHub Pages website generation
+
+## Architecture
+
+```text
+idea.txt
+  -> run_pipeline.py
+     -> src/experiment_runner.py
+        -> results/raw_results.csv
+        -> results/summary.csv
+     -> src/reporting.py
+        -> results/*.png + results/*.md
+     -> assets/generated/*.png
+  -> scripts/render_site.py
+     -> docs/index.html + docs/static/*
+  -> scripts/publish_github.py
+     -> GitHub repo + Pages
+```
 
 ## Quick Start
 
@@ -19,36 +79,73 @@ python scripts/render_site.py
 python scripts/publish_github.py
 ```
 
-## Inputs
+## Configuration
 
-- `idea.txt`: your research idea statement.
-- `config/key.txt`: OpenRouter settings (`baseurl`, `model_name`, `api_key`).
-- `config/github_key.txt`: GitHub PAT (for auto publishing).
+Create local config files:
+
+- `config/key.txt`
+- `config/github_key.txt`
+
+Expected keys in `config/key.txt`:
+
+```ini
+baseurl=https://openrouter.ai/api/v1
+model_name=meta-llama/llama-3.3-70b-instruct
+api_key=...
+proxy_url=http://127.0.0.1:16345
+```
 
 ## Outputs
 
-- `results/raw_results.csv`: full run-level decisions.
-- `results/summary.csv`: aggregated metrics by defense profile.
-- `results/*.png`: charts (security score, tradeoff, ablation delta).
-- `results/report.md`: full report.
-- `research/research_log.md`: complete research log and source list.
-- `assets/generated/*.png`: images generated through Gemini image-preview model.
-- `docs/index.html`: simple project website.
+- `results/raw_results.csv` full run-level decisions
+- `results/summary.csv` aggregated safety metrics
+- `results/security_score.png` profile score chart
+- `results/tradeoff.png` security/utility tradeoff chart
+- `results/ablation_delta.png` marginal gain chart
+- `results/paper_v2.md` paper draft
+- `results/skill_applied_demo.md` scientific skill applied demo
+- `research/related_work_comparison.md` related work gap analysis
+- `docs/index.html` project website
 
-## Experiment Profiles
+## Project Structure
 
-- `baseline`
-- `policy_only`
-- `policy_filter`
-- `policy_filter_least_priv`
-- `full_stack`
+```text
+assets/
+  brand/
+  generated/
+config/
+docs/
+papers/
+research/
+results/
+scripts/
+src/
+```
 
-The default score is:
+## Research Assets
 
-`security_score = 0.7 * attack_block_rate + 0.3 * benign_allow_rate`
+- 9 related paper PDFs are stored in `papers/`
+- comparison matrix is in `research/related_work_comparison.md`
+- latest paper draft is in `results/paper_v2.md`
 
-## Notes
+## Roadmap
 
-- The pipeline is defensive and focuses on API/agent safety evaluation.
-- Do not commit local key files.
+- Runtime-grounded execution benchmarks (tool-call level compromise metrics)
+- Larger multilingual adversarial corpora
+- Cross-model and cross-provider significance testing
+- PromptArmor/CaMeL-style defense integration
 
+## Contributing
+
+1. Fork this repository
+2. Create a feature branch
+3. Commit clear, scoped changes
+4. Open a pull request with reproducible steps
+
+## Security Notice
+
+This repository is for defensive security research only.
+
+- Never commit secrets (`config/*.txt`)
+- Use scoped API keys
+- Run experiments in controlled environments

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-labelledby="title desc">
+  <title id="title">LLM API Safety Lab Logo</title>
+  <desc id="desc">Shield and network emblem with project initials and name.</desc>
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0e2a47"/>
+      <stop offset="100%" stop-color="#1f5c92"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e67e22"/>
+      <stop offset="100%" stop-color="#cc5f14"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="608" height="608" rx="120" fill="#f4f9ff"/>
+  <g transform="translate(104 90)">
+    <path d="M216 0l180 66v130c0 124-71 204-180 258C107 400 36 320 36 196V66L216 0z" fill="url(#g1)"/>
+    <path d="M216 48l130 47v97c0 92-52 151-130 197C138 343 86 284 86 192V95l130-47z" fill="#ffffff"/>
+    <circle cx="216" cy="162" r="44" fill="url(#g1)"/>
+    <circle cx="152" cy="230" r="20" fill="#1f5c92"/>
+    <circle cx="280" cy="230" r="20" fill="#1f5c92"/>
+    <path d="M152 230h128M216 162v68" stroke="#1f5c92" stroke-width="12" stroke-linecap="round"/>
+  </g>
+  <rect x="56" y="498" width="528" height="86" rx="28" fill="url(#g2)"/>
+  <text x="320" y="550" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="36" font-weight="700" fill="#ffffff">LLM API SAFETY LAB</text>
+</svg>
+

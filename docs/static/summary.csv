@@ -1,0 +1,6 @@
+﻿profile,attack_block_rate_pct,benign_allow_rate_pct,unsafe_error_rate_pct,avg_risk_score,security_score,delta_from_prev
+baseline,100.0,100.0,0.0,49.75,100.0,0.0
+policy_only,100.0,100.0,0.0,50.2,100.0,0.0
+policy_filter,100.0,90.0,5.0,51.52,97.0,-3.0
+policy_filter_least_priv,100.0,90.0,5.0,51.27,97.0,0.0
+full_stack,100.0,90.0,5.0,51.27,97.0,0.0
