@@ -1,6 +1,9 @@
 {
-  "generated_at_utc": "2026-03-01T14:31:45.047807+00:00",
-  "images": [],
+  "generated_at_utc": "2026-03-01T15:29:14.553489+00:00",
+  "images": [
+    "assets/generated/threat_architecture.png",
+    "assets/generated/risk_matrix.png"
+  ],
   "model": "google/gemini-3.1-flash-image-preview",
-  "selected_text_model": "meta-llama/llama-3.3-70b-instruct"
+  "selected_text_model": "google/gemini-3-flash-preview"
 }

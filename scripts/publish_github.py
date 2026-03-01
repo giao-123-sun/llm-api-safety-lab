@@ -64,7 +64,7 @@ def _push_repo(owner: str, repo: str, token: str) -> None:
     subprocess.run(["git", "remote", "remove", "origin"], capture_output=True, text=True)
     _run(["git", "remote", "add", "origin", remote_url_auth])
     try:
-        _run(["git", "-c", "http.proxy=", "-c", "https.proxy=", "push", "-u", "origin", "main", "--force"])
+        _run(["git", "push", "-u", "origin", "main", "--force"])
     finally:
         _run(["git", "remote", "set-url", "origin", remote_url_public])
 

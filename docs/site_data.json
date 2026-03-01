@@ -3,10 +3,10 @@
     {
       "profile": "baseline",
       "attack_block_rate_pct": 100.0,
-      "benign_allow_rate_pct": 95.0,
-      "unsafe_error_rate_pct": 2.5,
-      "avg_risk_score": 50.0,
-      "security_score": 98.5,
+      "benign_allow_rate_pct": 100.0,
+      "unsafe_error_rate_pct": 0.0,
+      "avg_risk_score": 49.75,
+      "security_score": 100.0,
       "delta_from_prev": 0.0
     },
     {
@@ -14,34 +14,34 @@
       "attack_block_rate_pct": 100.0,
       "benign_allow_rate_pct": 100.0,
       "unsafe_error_rate_pct": 0.0,
-      "avg_risk_score": 49.0,
+      "avg_risk_score": 50.2,
       "security_score": 100.0,
-      "delta_from_prev": 1.5
+      "delta_from_prev": 0.0
     },
     {
       "profile": "policy_filter",
       "attack_block_rate_pct": 100.0,
-      "benign_allow_rate_pct": 85.0,
-      "unsafe_error_rate_pct": 7.5,
-      "avg_risk_score": 52.77,
-      "security_score": 95.5,
-      "delta_from_prev": -4.5
+      "benign_allow_rate_pct": 90.0,
+      "unsafe_error_rate_pct": 5.0,
+      "avg_risk_score": 51.52,
+      "security_score": 97.0,
+      "delta_from_prev": -3.0
     },
     {
       "profile": "policy_filter_least_priv",
       "attack_block_rate_pct": 100.0,
       "benign_allow_rate_pct": 90.0,
       "unsafe_error_rate_pct": 5.0,
-      "avg_risk_score": 51.52,
+      "avg_risk_score": 51.27,
       "security_score": 97.0,
-      "delta_from_prev": 1.5
+      "delta_from_prev": 0.0
     },
     {
       "profile": "full_stack",
       "attack_block_rate_pct": 100.0,
       "benign_allow_rate_pct": 90.0,
       "unsafe_error_rate_pct": 5.0,
-      "avg_risk_score": 51.15,
+      "avg_risk_score": 51.27,
       "security_score": 97.0,
       "delta_from_prev": 0.0
     }

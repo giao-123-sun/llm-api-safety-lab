@@ -22,6 +22,13 @@ class OpenRouterClient:
         self._timeout_s = timeout_s
         self._session = requests.Session()
         self._session.trust_env = False
+        if self._cfg.proxy_url:
+            self._session.proxies.update(
+                {
+                    "http": self._cfg.proxy_url,
+                    "https": self._cfg.proxy_url,
+                }
+            )
         retry = Retry(
             total=4,
             connect=4,
@@ -116,8 +123,7 @@ class OpenRouterClient:
             return "\n".join(x for x in parts if x)
         return ""
 
-    @staticmethod
-    def _extract_image_bytes(data: dict) -> bytes:
+    def _extract_image_bytes(self, data: dict) -> bytes:
         choices = data.get("choices") or []
         if not choices:
             raise ValueError("No choices in image response")
@@ -130,7 +136,7 @@ class OpenRouterClient:
                 if url.startswith("data:image"):
                     return OpenRouterClient._decode_data_url(url)
                 if url.startswith("http"):
-                    dl = OpenRouterClient._sessionless_get(url)
+                    dl = self._session.get(url, timeout=60)
                     dl.raise_for_status()
                     return dl.content
         content = message.get("content", [])
@@ -153,10 +159,3 @@ class OpenRouterClient:
             return base64.b64decode(payload)
         except Exception as exc:
             raise ValueError("Invalid data URL for image") from exc
-
-    @staticmethod
-    def _sessionless_get(url: str) -> requests.Response:
-        # Download generated assets without inheriting host proxy settings.
-        sess = requests.Session()
-        sess.trust_env = False
-        return sess.get(url, timeout=60)
